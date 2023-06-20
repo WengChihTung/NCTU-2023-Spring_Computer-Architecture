@@ -5,16 +5,22 @@ NVCC=nvcc
 CUDA_ARCHITECTURE=20
 OCELOT=`OcelotConfig -l`
 
-all: main
+all: cuda1 cuda2
 
-main: main.o device.o 
-	$(CC) main.o device.o -o main $(LINKER_DIRS) $(OCELOT)
+cuda1: main.o cuda1.o
+	$(CC) main.o cuda1.o -o cuda1 $(LINKER_DIRS) $(OCELOT)
+
+cuda2: main.o cuda2.o
+	$(CC) main.o cuda2.o -o cuda2 $(LINKER_DIRS) $(OCELOT)
 
 main.o: main.cu
 	$(NVCC) main.cu -c -I . 
 
-device.o: device.cu
-	$(NVCC) -c device.cu -arch=sm_$(CUDA_ARCHITECTURE) -I .
+cuda1.o: cuda1.cu
+	$(NVCC) -c cuda1.cu -arch=sm_$(CUDA_ARCHITECTURE) -I .
+
+cuda2.o: cuda2.cu
+	$(NVCC) -c cuda2.cu -arch=sm_$(CUDA_ARCHITECTURE) -I .
 
 clean:
 	rm -f main.o device.o main kernel-times.json

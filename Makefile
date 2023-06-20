@@ -23,4 +23,4 @@ cuda2.o: cuda2.cu
 	$(NVCC) -c cuda2.cu -arch=sm_$(CUDA_ARCHITECTURE) -I .
 
 clean:
-	rm -f main.o device.o main kernel-times.json
+	rm -f main.o kernel-times.json cuda1 cuda2 cuda1.o cuda2.o

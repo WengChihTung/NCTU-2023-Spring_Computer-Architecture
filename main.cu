@@ -2,53 +2,58 @@
 
 #include "parameters.h"
 
-extern float GPU_kernel(int *B,int *A,IndexSave* indsave);
+extern float GPU_kernel(int B[][SIZE],int A[][SIZE],IndexSave indsave[][SIZE]);
 
-void genNumbers(int *number, int size){
-	for(int i = 0; i < size; i++)
-		number[i] = rand()%256;
-}
-
-void function_1(int B[],int A[]){
-	for(int i=0;i<SIZE;i++){
-		B[i]=A[i];
-		
-		for(int j=1;j<LOOP;j++)
-		B[i]*=A[i];
-		
+void genNumbers(int A[][SIZE], int size){
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			A[i][j] = rand()%256;
+		}
 	}
 }
 
-bool verify(int A[],int B[]){
+void function_1(int C[][SIZE],int A[][SIZE]){
+	for(int i=0;i<SIZE;i++){
+		for(int j=0;j<SIZE;j++){
+			C[i][j]=A[i][j];
+			C[i][j]+=A[i][j];
+		}
+	}
+}
+
+bool verify(int A[][SIZE],int B[][SIZE]){
 
 	for(int i=0;i<SIZE;i++){
-		if(A[i]!=B[i]) return true;
+		for(int j = 0; j < SIZE; j++){
+			if(A[i][j]!=B[i][j]) return true;
+		}
 	}
 	return false;
 }
 
-void printIndex(IndexSave* indsave,int *B,int *C)
+void printIndex(IndexSave indsave[][SIZE],int B[][SIZE],int C[][SIZE])
 {
-	for(int i=0;i<SIZE;i++)
-	{
-		printf("%d : blockInd_x=%d,threadInd_x=%d,head=%d,stripe=%d",i,(indsave[i]).blockInd_x,(indsave[i]).threadInd_x,(indsave[i]).head,(indsave[i]).stripe);
-		printf(" || GPU result=%d,CPU result=%d\n",B[i],C[i]);
+	for(int i=0;i<SIZE;i++){
+		for(int j = 0; j < SIZE; j++){
+			printf("%d, %d : blockInd_x=%d,threadInd_x=%d,head=%d,stripe=%d",i,j,(indsave[i][j]).blockInd_x,(indsave[i][j]).threadInd_x,(indsave[i][j]).head,(indsave[i][j]).stripe);
+			printf(" || GPU result=%d,CPU result=%d\n",B[i][j],C[i][j]);
+		}
 	}
 }
 
 int main()
 {
 	// random seed
-	int *A=new int[SIZE];
+	int A[SIZE][SIZE];
 	// random number sequence computed by GPU
-	int *B=new int[SIZE];
+	int B[SIZE][SIZE];
 	// random number sequence computed by CPU
-	int *C=new int[SIZE];
+	int C[SIZE][SIZE];
 	// Indices saver (for checking correctness)
-	IndexSave *indsave = new IndexSave[SIZE];
+	IndexSave indsave[SIZE][SIZE];
 	
 	genNumbers(A,SIZE);
-	memset( B, 0, sizeof(int)*SIZE );
+	memset( B, 0, sizeof(int)*SIZE*SIZE );
 
 	/* CPU side*/
 	function_1(C,A);

@@ -3,34 +3,34 @@
 
 __global__ void cuda_kernel(int **dB, int **dA, IndexSave **dInd)
 {	
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if(idx < SIZE * SIZE){
-		int m = idx / SIZE;
-		int n = idx % SIZE;
-	 	dInd[m][n].blockInd_x = blockIdx.x;
-	 	dInd[m][n].threadInd_x = threadIdx.x;
-	 	dInd[m][n].head = idx;
-	 	dInd[m][n].stripe = 1;
-	 	dB[m][n] += dA[m][n];
-	 	dB[m][n] += dA[m][n];
+	// int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	// if(idx < SIZE * SIZE){
+	// 	int m = idx / SIZE;
+	// 	int n = idx % SIZE;
+	//  	dInd[m][n].blockInd_x = blockIdx.x;
+	//  	dInd[m][n].threadInd_x = threadIdx.x;
+	//  	dInd[m][n].head = idx;
+	//  	dInd[m][n].stripe = 1;
+	//  	dB[m][n] += dA[m][n];
+	//  	dB[m][n] += dA[m][n];
 
-	}
-	// int i = 0;
-	// int TotalThread = blockDim.x * gridDim.x;
-	// int      stripe = SIZE * SIZE / TotalThread;
-	// int        head = (blockIdx.x * blockDim.x + threadIdx.x) * stripe;
-	// int     LoopLim = head + stripe;
-	
-	// for(i = head; i < LoopLim; i++){
-	// 	int m = i / SIZE;
-	// 	int n = i % SIZE;
-	// 	dInd[m][n].blockInd_x = blockIdx.x;
-	// 	dInd[m][n].threadInd_x = threadIdx.x;
-	// 	dInd[m][n].head = head;
-	// 	dInd[m][n].stripe = stripe;
-	// 	dB[m][n] += dA[m][n];
-	// 	dB[m][n] += dA[m][n];
 	// }
+	int i = 0;
+	int TotalThread = blockDim.x * gridDim.x;
+	int      stripe = SIZE * SIZE / TotalThread;
+	int        head = (blockIdx.x * blockDim.x + threadIdx.x) * stripe;
+	int     LoopLim = head + stripe;
+	
+	for(i = head; i < LoopLim; i++){
+		int m = i / SIZE;
+		int n = i % SIZE;
+		dInd[m][n].blockInd_x = blockIdx.x;
+		dInd[m][n].threadInd_x = threadIdx.x;
+		dInd[m][n].head = head;
+		dInd[m][n].stripe = stripe;
+		dB[m][n] += dA[m][n];
+		dB[m][n] += dA[m][n];
+	}
 };
 
 
@@ -71,8 +71,8 @@ float GPU_kernel(int **B, int **A, IndexSave **indsave){
 	cudaEventRecord(start, 0);
 
 	// Launch Kernel
-	dim3 dimGrid(SIZE);
-	dim3 dimBlock(SIZE);
+	dim3 dimGrid(4);
+	dim3 dimBlock(4);
 	cuda_kernel<<<dimGrid,dimBlock>>>(dB,dA,dInd);
 	//cudaDeviceSynchronize();
 

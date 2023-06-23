@@ -2,66 +2,86 @@
 
 #include "parameters.h"
 
-extern float GPU_kernel(int *B,int *A,IndexSave* indsave);
+extern float GPU_kernel(int **B, int **A, IndexSave **indsave);
 
-void genNumbers(int *number, int size){
-	for(int i = 0; i < size; i++)
-		number[i] = rand()%256;
-}
-
-void function_1(int B[],int A[]){
-	for(int i=0;i<SIZE;i++){
-		B[i]=A[i];
-		
-		for(int j=1;j<LOOP;j++)
-		B[i]*=A[i];
-		
+void genNumbers(int **A, int size){
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			A[i][j] = rand()%256;
+		}
 	}
 }
 
-bool verify(int A[],int B[]){
+void function_1(int **C, int **A){
+	for(int i = 0; i < SIZE; i++){
+		for(int j = 0; j < SIZE; j++){
+			//Brightness Increase
+			C[i][j] = A[i][j];
+			C[i][j] += A[i][j];
+			//Thresholding
+			if(C[i][j] > 127)
+				C[i][j] = 255;
+			else
+				C[i][j] = 0;
+		}
+	}
+}
 
-	for(int i=0;i<SIZE;i++){
-		if(A[i]!=B[i]) return true;
+bool verify(int **A, int **B){
+
+	for(int i = 0; i < SIZE; i++){
+		for(int j = 0; j < SIZE; j++){
+			if(A[i][j]!=B[i][j]) return true;
+		}
 	}
 	return false;
 }
 
-void printIndex(IndexSave* indsave,int *B,int *C)
+void printIndex(IndexSave **indsave, int **B, int **C)
 {
-	for(int i=0;i<SIZE;i++)
-	{
-		printf("%d : blockInd_x=%d,threadInd_x=%d,head=%d,stripe=%d",i,(indsave[i]).blockInd_x,(indsave[i]).threadInd_x,(indsave[i]).head,(indsave[i]).stripe);
-		printf(" || GPU result=%d,CPU result=%d\n",B[i],C[i]);
+	for(int i = 0; i < SIZE; i++){
+		for(int j = 0; j < SIZE; j++){
+			printf("%d, %d : blockInd_x=%d, threadInd_x=%d, head=%d, stripe=%d", i, j, (indsave[i][j]).blockInd_x, (indsave[i][j]).threadInd_x, (indsave[i][j]).head, (indsave[i][j]).stripe);
+			printf(" || GPU result=%d, CPU result=%d\n",B[i][j],C[i][j]);
+		}
 	}
 }
 
 int main()
 {
 	// random seed
-	int *A=new int[SIZE];
+	int **A = new int* [SIZE];
 	// random number sequence computed by GPU
-	int *B=new int[SIZE];
+	int **B = new int* [SIZE];
 	// random number sequence computed by CPU
-	int *C=new int[SIZE];
+	int **C = new int* [SIZE];
 	// Indices saver (for checking correctness)
-	IndexSave *indsave = new IndexSave[SIZE];
-	
+	IndexSave **indsave = new IndexSave* [SIZE];
+
+	for(int i = 0; i < SIZE; i++){
+		A[i] = new int[SIZE];
+		B[i] = new int[SIZE];
+		C[i] = new int[SIZE];
+		indsave[i] = new IndexSave[SIZE];
+	}
+
 	genNumbers(A,SIZE);
-	memset( B, 0, sizeof(int)*SIZE );
+	for(int i = 0; i < SIZE; i++){
+		memset(B[i], 0, sizeof(int) * SIZE);
+	}
 
 	/* CPU side*/
 	function_1(C,A);
 
 	/* GPU side*/
-	float elapsedTime = GPU_kernel(B,A,indsave);
+	float elapsedTime = GPU_kernel(B, A, indsave);
 
 	/*Show threads execution info*/
-	printIndex(indsave,B,C);
+	printIndex(indsave, B, C);
 
 	printf("==============================================\n");
 	/* verify the result*/
-	if(verify(B,C)){printf("wrong answer\n");}
+	if(verify(B, C)){printf("wrong answer\n");}
 	printf("GPU time = %5.2f ms\n", elapsedTime);
 
 	/*Please press any key to exit the program*/
